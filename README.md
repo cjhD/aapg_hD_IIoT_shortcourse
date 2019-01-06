@@ -1,0 +1,1 @@
+# aapg_hD_IIoT_shortcourse

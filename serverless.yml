@@ -1,0 +1,87 @@
+
+service: iotbknd
+
+
+plugins:
+  - serverless-python-requirements
+
+
+custom:
+
+  stage: ${{opt:stage, self:provider.stage}}
+  esDomainName: temphum
+  awsAccountId: ${{env:AWS_ACCOUNT_ID}}
+  esEndpoint: ${{env:ES_ENDPOINT}}
+  esIndex: iotdata
+  esRegion: us-east-1
+  esIotMappingFile: temp_hum_mapping.json
+  pythonRequirements:
+    dockerizePip: false
+
+
+
+
+provider:
+  name: aws
+  variableSyntax: '\${{([\s\S]+?)}}'
+
+  stage: dev
+  region: us-east-1
+  environment:
+    DYNAMODB_TABLE_NAME: hvacPerf
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${{opt:region, self:provider.region}}:${{self:custom.awsAccountId}}:table/${{self:provider.environment.DYNAMODB_TABLE_NAME}}"
+
+
+functions:
+
+  elasticsearchIotMapping:
+    handler: pyhandler/create_es_meta.handler
+    name: elasticsearchIotMapping
+    description: Creates IoT data mapping in Elasticsearch
+    runtime: python3.6
+    environment:
+      ES_ENDPOINT: ${{self:custom.esEndpoint}}
+      ES_INDEX: ${{self:custom.esIndex}}
+      ES_IOT_MAPPING_FILE: ${{self:custom.esIotMappingFile}}
+      ES_REGION: ${{self:custom.esRegion}}
+
+
+
+  create:
+    handler: create.main
+    runtime: nodejs8.10
+    events:
+      - http:
+          path: api/device_meta
+          method: post
+          cors: true
+          authorizer: aws_iam
+
+
+  list:
+    handler: list.main
+    runtime: nodejs8.10
+    events:
+      - http:
+          path: api/device_data
+          method: get
+          cors: true
+
+
+
+
+resources:
+  - ${{file(resources/cognito-user-pool.yml)}}
+  - ${{file(resources/cognito-identity-pool.yml)}}
+  - ${{file(resources/iot-stack.yml)}}

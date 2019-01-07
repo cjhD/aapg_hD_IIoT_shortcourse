@@ -11,7 +11,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.cleanup()
 
 # AWS IoT certificate based connection
-myMQTTClient = AWSIoTMQTTClient("client")
+myMQTTClient = AWSIoTMQTTClient("client123")
 myMQTTClient.configureEndpoint(os.environ['AWS_IOT_ENDPOINT'], 8883)
 myMQTTClient.configureCredentials("./awsIoTConf/RootCA.pem", "./awsIoTConf/privatekey.pem", "./awsIoTConf/cert.pem")
 myMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
@@ -40,3 +40,12 @@ while 1:
     else:
         print (".")
         sleep(1)
+
+Provisioning a certificate:
+
+aws iot create-keys-and-certificate --set-as-active
+The output of the command contains the certificate, the public key, and the private key.
+
+aws iot describe-certificate --certificate-id id --output text --query certific ateDescription.certificatePem > cert.pem
+
+--certificate-id specifies the part in the certificate ARN after the last slash (/): arn:aws:iot:us-east-1:123456789012:cert/id-is-found-here.

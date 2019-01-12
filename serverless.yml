@@ -9,12 +9,12 @@ plugins:
 custom:
 
   stage: ${{opt:stage, self:provider.stage}}
-  esDomainName: temphum
+  esDomainName: aapgHD
   awsAccountId: ${{env:AWS_ACCOUNT_ID}}
   esEndpoint: ${{env:ES_ENDPOINT}}
   esIndex: iotdata
   esRegion: us-east-1
-  esIotMappingFile: temp_hum_mapping.json
+  esIotMappingFile: es_mapping_data.json
   pythonRequirements:
     dockerizePip: false
 
@@ -28,7 +28,7 @@ provider:
   stage: dev
   region: us-east-1
   environment:
-    DYNAMODB_TABLE_NAME: hvacPerf
+    DYNAMODB_TABLE_NAME: aapgHD
 
   iamRoleStatements:
     - Effect: Allow
@@ -45,10 +45,10 @@ provider:
 
 functions:
 
-  elasticsearchIotMapping:
-    handler: pyhandler/create_es_meta.handler
+  aapgHDIIoT:
+    handler: pyHandler/create_es_meta.handler
     name: elasticsearchIotMapping
-    description: Creates IoT data mapping in Elasticsearch
+    description: Creates IIoT data mapping in Elasticsearch
     runtime: python3.6
     environment:
       ES_ENDPOINT: ${{self:custom.esEndpoint}}
@@ -82,6 +82,4 @@ functions:
 
 
 resources:
-  - ${{file(resources/cognito-user-pool.yml)}}
-  - ${{file(resources/cognito-identity-pool.yml)}}
-  - ${{file(resources/iot-stack.yml)}}
+  - ${{file(resources/iot_stack.yml)}}

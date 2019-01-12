@@ -1,0 +1,143 @@
+
+
+Resources:
+
+  ElasticSearchInstance:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      ElasticsearchVersion: 6.2
+      DomainName: ${{self:custom.esDomainName}}
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp2
+        VolumeSize: 10
+      ElasticsearchClusterConfig:
+        InstanceType: t2.small.elasticsearch
+        InstanceCount: 1
+        DedicatedMasterEnabled: false
+        ZoneAwarenessEnabled: false
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS: "arn:aws:iam::${{self:custom.awsAccountId}}:user/elasticsearch"
+            Action: "es:*"
+            Resource: "arn:aws:es:${{self:custom.esRegion}}:${{self:custom.awsAccountId}}:domain/${{self:custom.esDomainName}}/*"
+
+
+  AAPGThing:
+    Type: AWS::IoT::Thing
+    Properties:
+      ThingName: AAPGThing
+
+  AAPGThingPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: ["iot:Connect"]
+            Resource: ["${{file(./iiot_arn_config.yml):iotThingClientIdArn}}"]
+          - Effect: "Allow"
+            Action: ["iot:Publish"]
+            Resource: ["${{file(./iiot_arn_config.yml):iotThingTopicArn}}"]
+
+  SensorPolicyPrincipalAttachmentCert:
+    Type: AWS::IoT::PolicyPrincipalAttachment
+    Properties:
+      PolicyName: { Ref: AAPGThingPolicy }
+      Principal: ${{file(./iiot_arn_config.yml):iotThingCertArn}}
+
+  AAPGThingPrincipalAttachmentCert:
+    Type: "AWS::IoT::ThingPrincipalAttachment"
+    Properties:
+      ThingName: { Ref: AAPGThing }
+      Principal: ${{file(./iiot_arn_config.yml):iotThingCertArn}}
+
+  IoTRole:
+   Type: AWS::IAM::Role
+   Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - iot.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+
+
+  IoTNRolePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AAPGThingPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:PutMetricFilter
+              - logs:PutRetentionPolicy
+            Resource: "*"
+          -
+            Effect: "Allow"
+            Action:
+              - "es:*"
+            Resource: "*"
+      Roles: [{ Ref: IoTRole }]
+
+
+
+  AAPGThingRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      TopicRulePayload:
+        RuleDisabled: false
+        Sql: "SELECT * FROM '12345abcd/aapgHDIIoT'"
+        Actions:
+          -
+            DynamoDB:
+              TableName: hvacPerf
+              HashKeyField: "serialNumber"
+              HashKeyValue: "${topic(1)}"
+              RangeKeyField: "timeStamp"
+              RangeKeyValue: "${timestamp()}"
+              PayloadField: "payload"
+              RoleArn: { Fn::GetAtt: [ IoTRole, Arn ] }
+
+
+
+  EsAAPGThingRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      TopicRulePayload:
+        RuleDisabled: false
+        Sql: "SELECT topic(1) AS serialNumber, timestamp() AS timestamp, temperature, humidity, createdAt FROM '12345abcd/aapgHDIIoT'"
+        Actions:
+          -
+            Elasticsearch:
+              Endpoint: ${{self:custom.esEndpoint}}
+              Id: "${newuuid()}"
+              Index: ${{self:custom.esIndex}}
+              RoleArn: { Fn::GetAtt: [ IoTRole, Arn ] }
+              Type: "_doc"

@@ -1,0 +1,10 @@
+
+
+
+iotThingCertArn: arn:aws:iot:AWS_REGION:AWS_ACCOUNT_ID:cert/CERT_NO
+
+
+iotThingClientIdArn: arn:aws:iot:AWS_REGION:AWS_ACCOUNT_ID:client/${iot:ClientId}
+
+
+iotThingTopicArn: arn:aws:iot:AWS_REGION:AWS_ACCOUNT_ID:topic/12345abcd/aapgHDIIoT

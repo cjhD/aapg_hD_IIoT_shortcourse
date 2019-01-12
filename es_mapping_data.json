@@ -1,0 +1,23 @@
+{
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "serialNumber": {
+          "type": "text"
+        },
+        "timestamp": {
+           "type": "date"
+         },
+         "createdAt": {
+            "type": "date"
+          },
+        "temperature": {
+          "type": "float"
+        },
+        "humidity": {
+          "type": "float"
+        }
+    }
+  }
+}
+}

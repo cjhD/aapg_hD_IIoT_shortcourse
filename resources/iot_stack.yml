@@ -117,7 +117,7 @@ Resources:
         Actions:
           -
             DynamoDB:
-              TableName: hvacPerf
+              TableName: aapgHD
               HashKeyField: "serialNumber"
               HashKeyValue: "${topic(1)}"
               RangeKeyField: "timeStamp"

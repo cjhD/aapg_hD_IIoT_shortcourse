@@ -22,7 +22,7 @@ serial_no = os.environ['DEVICE_SERIAL_NO']
 
 #connect and publish
 myMQTTClient.connect()
-myMQTTClient.publish(serial_no + "/temphumid", "connected", 0)
+myMQTTClient.publish(serial_no + "/aapgHDIIoT", "connected", 0)
 
 #loop and publish sensor reading
 while 1:
@@ -35,7 +35,7 @@ while 1:
 
         payload = '{ "temperature": ' + str(result.temperature) + ',"humidity": '+ str(result.humidity) + ',"createdAt": "' + now_str + '" }'
         print payload
-        myMQTTClient.publish(serial_no + "/temphumid", payload, 0)
+        myMQTTClient.publish(serial_no + "/aapgHDIIoT", payload, 0)
         sleep(4)
     else:
         print (".")

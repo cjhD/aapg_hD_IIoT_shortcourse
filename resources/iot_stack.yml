@@ -22,7 +22,7 @@ Resources:
           -
             Effect: "Allow"
             Principal:
-              AWS: "arn:aws:iam::${{self:custom.awsAccountId}}:user/elasticsearch"
+              AWS: "arn:aws:iam::${{self:custom.awsAccountId}}:user/IAM_USER_NAME"
             Action: "es:*"
             Resource: "arn:aws:es:${{self:custom.esRegion}}:${{self:custom.awsAccountId}}:domain/${{self:custom.esDomainName}}/*"
 
@@ -113,7 +113,7 @@ Resources:
     Properties:
       TopicRulePayload:
         RuleDisabled: false
-        Sql: "SELECT * FROM '12345abcd/aapgHDIIoT'"
+        Sql: "SELECT topic(1) AS serialNumber, timestamp() AS timestamp, temperature, humidity, createdAt FROM '12345abcd/aapghdiiot'"
         Actions:
           -
             DynamoDB:
@@ -124,16 +124,6 @@ Resources:
               RangeKeyValue: "${timestamp()}"
               PayloadField: "payload"
               RoleArn: { Fn::GetAtt: [ IoTRole, Arn ] }
-
-
-
-  EsAAPGThingRule:
-    Type: AWS::IoT::TopicRule
-    Properties:
-      TopicRulePayload:
-        RuleDisabled: false
-        Sql: "SELECT topic(1) AS serialNumber, timestamp() AS timestamp, temperature, humidity, createdAt FROM '12345abcd/aapgHDIIoT'"
-        Actions:
           -
             Elasticsearch:
               Endpoint: ${{self:custom.esEndpoint}}
@@ -141,3 +131,22 @@ Resources:
               Index: ${{self:custom.esIndex}}
               RoleArn: { Fn::GetAtt: [ IoTRole, Arn ] }
               Type: "_doc"
+
+  AAPGhDTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: ${{self:provider.environment.DYNAMODB_TABLE_NAME}}
+      AttributeDefinitions:
+        - AttributeName: serialNumber
+          AttributeType: S
+        - AttributeName: timeStamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: serialNumber
+          KeyType: HASH
+        - AttributeName: timeStamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 10
+        WriteCapacityUnits: 100

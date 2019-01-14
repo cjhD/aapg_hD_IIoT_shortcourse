@@ -10,32 +10,33 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.cleanup()
 
+
 # AWS IoT certificate based connection
-myMQTTClient = AWSIoTMQTTClient("client123")
+myMQTTClient = AWSIoTMQTTClient("client1")
 myMQTTClient.configureEndpoint(os.environ['AWS_IOT_ENDPOINT'], 8883)
-myMQTTClient.configureCredentials("./awsIoTConf/RootCA.pem", "./awsIoTConf/privatekey.pem", "./awsIoTConf/cert.pem")
-myMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
-myMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
-myMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
-myMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
-serial_no = os.environ['DEVICE_SERIAL_NO']
+myMQTTClient.configureCredentials("/home/pi/awsIoTConf/RootCA.pem", "/home/pi/awsIoTConf/privatekey.pem", "/home/pi/awsIoTConf/cert.pem")
+myMQTTClient.configureOfflinePublishQueueing(-1)
+myMQTTClient.configureDrainingFrequency(2)
+myMQTTClient.configureConnectDisconnectTimeout(10)
+myMQTTClient.configureMQTTOperationTimeout(5)
+serial_no = "12345abcd"
 
 #connect and publish
 myMQTTClient.connect()
-myMQTTClient.publish(serial_no + "/aapgHDIIoT", "connected", 0)
+myMQTTClient.publish(serial_no + "/aapghdiiot", "connected", 0)
 
 #loop and publish sensor reading
 while 1:
     now = datetime.utcnow()
-    now_str = now.strftime('%Y-%m-%dT%H:%M:%SZ') #e.g. 2016-04-18T06:12:25.877Z
-    instance = dht11.DHT11(pin = 4) #BCM GPIO04
+    now_str = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+    instance = dht11.DHT11(pin = 4) 
     result = instance.read()
 
     if result.is_valid():
 
         payload = '{ "temperature": ' + str(result.temperature) + ',"humidity": '+ str(result.humidity) + ',"createdAt": "' + now_str + '" }'
         print payload
-        myMQTTClient.publish(serial_no + "/aapgHDIIoT", payload, 0)
+        myMQTTClient.publish(serial_no + "/aapghdiiot", payload, 0)
         sleep(4)
     else:
         print (".")

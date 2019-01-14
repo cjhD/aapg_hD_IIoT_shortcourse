@@ -1,5 +1,5 @@
 
-service: aapgHDIIoT
+service: aapg-hd-iiot-shortcourse
 
 
 plugins:
@@ -9,7 +9,7 @@ plugins:
 custom:
 
   stage: ${{opt:stage, self:provider.stage}}
-  esDomainName: aapgHD
+  esDomainName: aapghd
   awsAccountId: ${{env:AWS_ACCOUNT_ID}}
   esEndpoint: ${{env:ES_ENDPOINT}}
   esIndex: iotdata
@@ -45,7 +45,7 @@ provider:
 
 functions:
 
-  aapgHDIIoT:
+  aapghdiiot:
     handler: pyHandler/create_es_meta.handler
     name: elasticsearchIotMapping
     description: Creates IIoT data mapping in Elasticsearch
@@ -55,28 +55,6 @@ functions:
       ES_INDEX: ${{self:custom.esIndex}}
       ES_IOT_MAPPING_FILE: ${{self:custom.esIotMappingFile}}
       ES_REGION: ${{self:custom.esRegion}}
-
-
-
-  create:
-    handler: create.main
-    runtime: nodejs8.10
-    events:
-      - http:
-          path: api/device_meta
-          method: post
-          cors: true
-          authorizer: aws_iam
-
-
-  list:
-    handler: list.main
-    runtime: nodejs8.10
-    events:
-      - http:
-          path: api/device_data
-          method: get
-          cors: true
 
 
 

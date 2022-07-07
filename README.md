@@ -1,3 +1,3 @@
-### AAPG Short Course Material at Marathon Oil Tower, Houston, TX on January 15th, 2019
+### Hands on coding short course leveraging elasticsearch, AWS resources and IoT device in Houston, TX on January 15th, 2019.
 
 ##### More details to follow soon...
